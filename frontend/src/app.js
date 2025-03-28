@@ -3,35 +3,49 @@ import { Line } from "react-chartjs-2";
 import "chart.js/auto";
 
 const App = () => {
-  const [data, setData] = useState({
-    labels: Array.from({ length: 100 }, (_, i) => i),
+  const initialData = Array.from({ length: 100 }, (_, i) => ({
+    x: i,
+    y: 70 + 20 * Math.sin((i * 2 * Math.PI) / 100),
+  }));
+
+  const [chartData, setChartData] = useState({
+    labels: initialData.map((point) => point.x),
     datasets: [
       {
         label: "HRV Data",
-        data: Array.from({ length: 100 }, (_, i) => 70 + 20 * Math.sin((i * 2 * Math.PI) / 100)),
+        data: initialData.map((point) => point.y),
         borderColor: "skyblue",
         borderWidth: 2,
+        tension: 0.3, // Adds a smooth curve
       },
     ],
   });
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setData((prev) => {
-        const newData = [...prev.datasets[0].data.slice(1), 70 + 20 * Math.sin((prev.labels.length * 2 * Math.PI) / 100)];
+      setChartData((prev) => {
+        const nextX = prev.labels[prev.labels.length - 1] + 1;
+        const nextY = 70 + 20 * Math.sin((nextX * 2 * Math.PI) / 100);
+
         return {
-          labels: prev.labels,
-          datasets: [{ ...prev.datasets[0], data: newData }],
+          labels: [...prev.labels.slice(1), nextX],
+          datasets: [
+            {
+              ...prev.datasets[0],
+              data: [...prev.datasets[0].data.slice(1), nextY],
+            },
+          ],
         };
       });
     }, 500);
+
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div style={{ width: "80%", margin: "auto", textAlign: "center" }}>
       <h1>🌬️ BreathState Prototype - HRV Tracker</h1>
-      <Line data={data} />
+      <Line data={chartData} />
       <p>⚠️ This is just a prototype! Real sensor data will be integrated soon.</p>
     </div>
   );
